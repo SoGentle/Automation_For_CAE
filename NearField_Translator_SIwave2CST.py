@@ -4,12 +4,9 @@ Spyder Editor
 This is a temporary script file.
 """
 import os
-import pandas
-from xml.etree import ElementTree
-from xml.etree.ElementTree import Element
-from xml.etree.ElementTree import SubElement
+import pandas as pd
+import MakeXML
 
-from xml.dom import minidom
 #폴더 설정
 Current_Dir = os.getcwd() #현재폴더로 설정함
 file_list = os.listdir(Current_Dir)
@@ -37,6 +34,8 @@ AND_file = os.path.join(Current_Dir, AND_fileName+'.and')  # *.and 파일
 NFD_list
 #결과물 이외의 필요없어진 변수들 삭제
 del NFD_list_Sorted, NFD_num, fileExtension, fileName, file_list, file_name, name, num, path
+
+
 #sorted(range(len(NFD_num)), key=lambda D: NFD_num[D])
 f_AND = open(AND_file, 'r')
 lines = f_AND.readlines()
@@ -59,64 +58,219 @@ for line in lines:
 #            pass
 f_AND.close()
 
+DAT_Ex_Xmin = pd.DataFrame()
+DAT_Ey_Xmin = pd.DataFrame()
+DAT_Ez_Xmin = pd.DataFrame()
+DAT_Hx_Xmin = pd.DataFrame()
+DAT_Hy_Xmin = pd.DataFrame()
+DAT_Hz_Xmin = pd.DataFrame()
+
+DAT_Ex_Xmax = pd.DataFrame()
+DAT_Ey_Xmax = pd.DataFrame()
+DAT_Ez_Xmax = pd.DataFrame()
+DAT_Hx_Xmax = pd.DataFrame()
+DAT_Hy_Xmax = pd.DataFrame()
+DAT_Hz_Xmax = pd.DataFrame()
+
+DAT_Ex_Ymin = pd.DataFrame()
+DAT_Ey_Ymin = pd.DataFrame()
+DAT_Ez_Ymin = pd.DataFrame()
+DAT_Hx_Ymin = pd.DataFrame()
+DAT_Hy_Ymin = pd.DataFrame()
+DAT_Hz_Ymin = pd.DataFrame()
+
+DAT_Ex_Ymax = pd.DataFrame()
+DAT_Ey_Ymax = pd.DataFrame()
+DAT_Ez_Ymax = pd.DataFrame()
+DAT_Hx_Ymax = pd.DataFrame()
+DAT_Hy_Ymax = pd.DataFrame()
+DAT_Hz_Ymax = pd.DataFrame()
+
+DAT_Ex_Zmin = pd.DataFrame()
+DAT_Ey_Zmin = pd.DataFrame()
+DAT_Ez_Zmin = pd.DataFrame()
+DAT_Hx_Zmin = pd.DataFrame()
+DAT_Hy_Zmin = pd.DataFrame()
+DAT_Hz_Zmin = pd.DataFrame()
+
+DAT_Ex_Zmax = pd.DataFrame()
+DAT_Ey_Zmax = pd.DataFrame()
+DAT_Ez_Zmax = pd.DataFrame()
+DAT_Hx_Zmax = pd.DataFrame()
+DAT_Hy_Zmax = pd.DataFrame()
+DAT_Hz_Zmax = pd.DataFrame()
+
+num=0
 # read csv file
-df = pandas.read_csv(NFD_list[0], skiprows=5, names=['Index', 'X', 'Y', 'Z', 'Ex_real', 'Ex_imag', 'Ey_real', 'Ey_imag', 'Ez_real', 'Ez_imag', 'Hx_real', 'Hx_imag', 'Hy_real', 'Hy_imag', 'Hz_real', 'Hz_imag'])
-# df is pandas.DataFrame
-CSV_data = df.set_index("Index")
-CSV_data['Y']
-EmissionType_list=["Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]
+for freq in frequency:
+    df = pd.read_csv(NFD_list[num], skiprows=5, names=['Index', 'X', 'Y', 'Z', 'Ex_real', 'Ex_imag', 'Ey_real', 'Ey_imag', 'Ez_real', 'Ez_imag', 'Hx_real', 'Hx_imag', 'Hy_real', 'Hy_imag', 'Hz_real', 'Hz_imag'])
+    # df is pandas.DataFrame
+    del df["Index"]
+    for n in range(df.shape[0]):
+        for m in range(3):
+            df.iloc[n,m]=df.iloc[n,m].replace("mm", "")
+            if "e+" in df.iloc[n,m]:
+                (numb, power) = df.iloc[n,m].split('e+')
+    #            power = str(int(power)-3)
+                power = int(power)-3
+                if power >= 0:
+                    df.iloc[n,m] = numb +"e+"+ str(power)
+                else:
+                    df.iloc[n,m] = numb + "e" +str(power)
+            elif "e-" in df.iloc[n,m]:
+                (numb, power) = df.iloc[n,m].split('e-')
+                power = str(int(power)+3)
+                df.iloc[n,m] = numb + 'e-' + power
+            else:
+                continue
+    df['X']=pd.to_numeric(df['X'])
+    df['Y']=pd.to_numeric(df['Y'])
+    df['Z']=pd.to_numeric(df['Z'])
+    X_min = min(df['X'])
+    X_max = max(df['X'])
+    Y_min = min(df['Y'])
+    Y_max = max(df['Y'])
+    Z_min = min(df['Z'])
+    Z_max = max(df['Z'])
+    X_min_side = df[df.X==X_min]
+    X_max_side = df[df.X==X_max]
+    Y_min_side = df[df.Y==Y_min]
+    Y_max_side = df[df.Y==Y_max]
+    Z_min_side = df[df.Z==Z_min]
+    Z_max_side = df[df.Z==Z_max]
+    
+    if num == 0:        
+        DAT_Ex_Xmin = pd.concat([DAT_Ex_Xmin, X_min_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Xmax = pd.concat([DAT_Ex_Xmax, X_max_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Xmin = pd.concat([DAT_Ey_Xmin, X_min_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Xmax = pd.concat([DAT_Ey_Xmax, X_max_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Xmin = pd.concat([DAT_Ez_Xmin, X_min_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Xmax = pd.concat([DAT_Ez_Xmax, X_max_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
 
-## xml write
+        DAT_Ex_Ymin = pd.concat([DAT_Ex_Ymin, Y_min_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Ymax = pd.concat([DAT_Ex_Ymax, Y_max_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Ymin = pd.concat([DAT_Ey_Ymin, Y_min_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Ymax = pd.concat([DAT_Ey_Ymax, Y_max_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Ymin = pd.concat([DAT_Ez_Ymin, Y_min_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Ymax = pd.concat([DAT_Ez_Ymax, Y_max_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
 
-def prettify(elem):
-    """Return a pretty-printed XML string for the Element.
-    """
-    rough_string = ElementTree.tostring(elem, 'utf-8')
-    reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="  ")
+        DAT_Ex_Zmin = pd.concat([DAT_Ex_Zmin, Z_min_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Zmax = pd.concat([DAT_Ex_Zmax, Z_max_side[['X','Y','Z', 'Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Zmin = pd.concat([DAT_Ey_Zmin, Z_min_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Zmax = pd.concat([DAT_Ey_Zmax, Z_max_side[['X','Y','Z', 'Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Zmin = pd.concat([DAT_Ez_Zmin, Z_min_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Zmax = pd.concat([DAT_Ez_Zmax, Z_max_side[['X','Y','Z', 'Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
 
+        DAT_Hx_Xmin = pd.concat([DAT_Hx_Xmin, X_min_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Xmax = pd.concat([DAT_Hx_Xmax, X_max_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Xmin = pd.concat([DAT_Hy_Xmin, X_min_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Xmax = pd.concat([DAT_Hy_Xmax, X_max_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Xmin = pd.concat([DAT_Hz_Xmin, X_min_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Xmax = pd.concat([DAT_Hz_Xmax, X_max_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
 
-root = Element('EmissionScan')
-for key in phonelist.keys():
-    xml_Nfs_ver = SubElement(root, 'Nfs_ver')
-    xml_Nfs_ver.text = '1.0'
-    xml_Filename = SubElement(root, 'Filename')
-    xml_Filename.text = 'Ex.xml'
-    xml_Filename = SubElement(root, 'File_ver')
-    xml_Filename.text = '1'
-    xml_Probe = SubElement(root, 'Probe')
-    xml_Probe_Field = SubElement(xml_Probe, 'Field')
-    xml_Probe_Field.text = 'Ex'
-    xml_Data = SubElement(root, 'Data')
-    xml_Data_Coordinates = SubElement(xml_Data, 'Coordinates')
-    xml_Data_Coordinates.text = 'xyz'
-    xml_Data_Frequencies = SubElement(xml_Data, 'Frequencies')
-    xml_Data_Frequencies_List = SubElement(xml_Data_Frequencies, 'List')
-    xml_Data_Frequencies_List.text = ##Freq List
-    xml_Data_Measurement = SubElement(xml_Data, 'Measurement')
-    xml_Data_Measurement_Format = SubElement(xml_Data_Measurement, 'Format')
-    xml_Data_Measurement_Format.text = 'ri' ## Format
-    xml_Data_Measurement_Data_files = SubElement(xml_Data_Measurement, 'Data_files')
-    xml_Data_Measurement_Data_files.text = 'Ex.dat' ## Format
+        DAT_Hx_Ymin = pd.concat([DAT_Hx_Ymin, Y_min_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Ymax = pd.concat([DAT_Hx_Ymax, Y_max_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Ymin = pd.concat([DAT_Hy_Ymin, Y_min_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Ymax = pd.concat([DAT_Hy_Ymax, Y_max_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Ymin = pd.concat([DAT_Hz_Ymin, Y_min_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Ymax = pd.concat([DAT_Hz_Ymax, Y_max_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
 
-output_file = open( 'Emission.xml', 'w' )
-output_file.write( '<?xml version="1.0" encoding="UTF-8"?>' )
-output_file.write( prettify(root))
-output_file.close()
+        DAT_Hx_Zmin = pd.concat([DAT_Hx_Zmin, Z_min_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Zmax = pd.concat([DAT_Hx_Zmax, Z_max_side[['X','Y','Z', 'Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Zmin = pd.concat([DAT_Hy_Zmin, Z_min_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Zmax = pd.concat([DAT_Hy_Zmax, Z_max_side[['X','Y','Z', 'Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Zmin = pd.concat([DAT_Hz_Zmin, Z_min_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Zmax = pd.concat([DAT_Hz_Zmax, Z_max_side[['X','Y','Z', 'Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
 
-#
-# root = etree.Element("EmissionScan")
-# NFS_ver = etree.Element("Nfs_ver")
-# NFS_ver.text = "1.0"
-# File_name = etree.Element("Filename")
-# File_name.text = AND_fileName+EmissionType_list[0]+".xml"
-# File_ver = etree.Element("File_ver")
-# File_ver.text = "1"
-# ProbeType1 = etree.Element("Probe")
-# ProbeType2 = etree.SubElement("Field")
-# ProbeType2.text = EmissionType_list[0]
-# Data_elem = etree.Element("Data")
-# Coordi_elem = etree.SubElement("Coordinates")
-# Coordi_elem.text="xyz"
-# Freq_elem = etree.SubElement("Frequencies")
-# Freq_elem.tex
+    else:
+        DAT_Ex_Xmin = pd.concat([DAT_Ex_Xmin, X_min_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Xmax = pd.concat([DAT_Ex_Xmax, X_max_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Xmin = pd.concat([DAT_Ey_Xmin, X_min_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Xmax = pd.concat([DAT_Ey_Xmax, X_max_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Xmin = pd.concat([DAT_Ez_Xmin, X_min_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Xmax = pd.concat([DAT_Ez_Xmax, X_max_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+
+        DAT_Ex_Ymin = pd.concat([DAT_Ex_Ymin, Y_min_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Ymax = pd.concat([DAT_Ex_Ymax, Y_max_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Ymin = pd.concat([DAT_Ey_Ymin, Y_min_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Ymax = pd.concat([DAT_Ey_Ymax, Y_max_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Ymin = pd.concat([DAT_Ez_Ymin, Y_min_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Ymax = pd.concat([DAT_Ez_Ymax, Y_max_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+
+        DAT_Ex_Zmin = pd.concat([DAT_Ex_Zmin, Z_min_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ex_Zmax = pd.concat([DAT_Ex_Zmax, Z_max_side[['Ex_real','Ex_imag']].rename(columns={"Ex_real":"Ex_real_"+str(num), "Ex_imag":"Ex_imag_"+str(num)})], axis=1)
+        DAT_Ey_Zmin = pd.concat([DAT_Ey_Zmin, Z_min_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ey_Zmax = pd.concat([DAT_Ey_Zmax, Z_max_side[['Ey_real','Ey_imag']].rename(columns={"Ey_real":"Ey_real_"+str(num), "Ey_imag":"Ey_imag_"+str(num)})], axis=1)
+        DAT_Ez_Zmin = pd.concat([DAT_Ez_Zmin, Z_min_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+        DAT_Ez_Zmax = pd.concat([DAT_Ez_Zmax, Z_max_side[['Ez_real','Ez_imag']].rename(columns={"Ez_real":"Ez_real_"+str(num), "Ez_imag":"Ez_imag_"+str(num)})], axis=1)
+
+        DAT_Hx_Xmin = pd.concat([DAT_Hx_Xmin, X_min_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Xmax = pd.concat([DAT_Hx_Xmax, X_max_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Xmin = pd.concat([DAT_Hy_Xmin, X_min_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Xmax = pd.concat([DAT_Hy_Xmax, X_max_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Xmin = pd.concat([DAT_Hz_Xmin, X_min_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Xmax = pd.concat([DAT_Hz_Xmax, X_max_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+
+        DAT_Hx_Ymin = pd.concat([DAT_Hx_Ymin, Y_min_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Ymax = pd.concat([DAT_Hx_Ymax, Y_max_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Ymin = pd.concat([DAT_Hy_Ymin, Y_min_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Ymax = pd.concat([DAT_Hy_Ymax, Y_max_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Ymin = pd.concat([DAT_Hz_Ymin, Y_min_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Ymax = pd.concat([DAT_Hz_Ymax, Y_max_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+
+        DAT_Hx_Zmin = pd.concat([DAT_Hx_Zmin, Z_min_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hx_Zmax = pd.concat([DAT_Hx_Zmax, Z_max_side[['Hx_real','Hx_imag']].rename(columns={"Hx_real":"Hx_real_"+str(num), "Hx_imag":"Hx_imag_"+str(num)})], axis=1)
+        DAT_Hy_Zmin = pd.concat([DAT_Hy_Zmin, Z_min_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hy_Zmax = pd.concat([DAT_Hy_Zmax, Z_max_side[['Hy_real','Hy_imag']].rename(columns={"Hy_real":"Hy_real_"+str(num), "Hy_imag":"Hy_imag_"+str(num)})], axis=1)
+        DAT_Hz_Zmin = pd.concat([DAT_Hz_Zmin, Z_min_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        DAT_Hz_Zmax = pd.concat([DAT_Hz_Zmax, Z_max_side[['Hz_real','Hz_imag']].rename(columns={"Hz_real":"Hz_real_"+str(num), "Hz_imag":"Hz_imag_"+str(num)})], axis=1)
+        
+    print(num)
+    num=num+1
+
+DAT_Ex_Xmin.to_csv('Ex_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Ex_Xmax.to_csv('Ex_Xmax.dat', sep='\t', index=False, header=False)
+DAT_Ey_Xmin.to_csv('Ey_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Ey_Xmax.to_csv('Ey_Xmax.dat', sep='\t', index=False, header=False)
+DAT_Ez_Xmin.to_csv('Ez_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Ez_Xmax.to_csv('Ez_Xmax.dat', sep='\t', index=False, header=False)
+DAT_Hx_Xmin.to_csv('Hx_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Hx_Xmax.to_csv('Hx_Xmax.dat', sep='\t', index=False, header=False)
+DAT_Hy_Xmin.to_csv('Hy_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Hy_Xmax.to_csv('Hy_Xmax.dat', sep='\t', index=False, header=False)
+DAT_Hz_Xmin.to_csv('Hz_Xmin.dat', sep='\t', index=False, header=False)
+DAT_Hz_Xmax.to_csv('Hz_Xmax.dat', sep='\t', index=False, header=False)
+
+DAT_Ex_Ymin.to_csv('Ex_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Ex_Ymax.to_csv('Ex_Ymax.dat', sep='\t', index=False, header=False)
+DAT_Ey_Ymin.to_csv('Ey_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Ey_Ymax.to_csv('Ey_Ymax.dat', sep='\t', index=False, header=False)
+DAT_Ez_Ymin.to_csv('Ez_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Ez_Ymax.to_csv('Ez_Ymax.dat', sep='\t', index=False, header=False)
+DAT_Hx_Ymin.to_csv('Hx_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Hx_Ymax.to_csv('Hx_Ymax.dat', sep='\t', index=False, header=False)
+DAT_Hy_Ymin.to_csv('Hy_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Hy_Ymax.to_csv('Hy_Ymax.dat', sep='\t', index=False, header=False)
+DAT_Hz_Ymin.to_csv('Hz_Ymin.dat', sep='\t', index=False, header=False)
+DAT_Hz_Ymax.to_csv('Hz_Ymax.dat', sep='\t', index=False, header=False)
+
+DAT_Ex_Zmin.to_csv('Ex_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Ex_Zmax.to_csv('Ex_Zmax.dat', sep='\t', index=False, header=False)
+DAT_Ey_Zmin.to_csv('Ey_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Ey_Zmax.to_csv('Ey_Zmax.dat', sep='\t', index=False, header=False)
+DAT_Ez_Zmin.to_csv('Ez_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Ez_Zmax.to_csv('Ez_Zmax.dat', sep='\t', index=False, header=False)
+DAT_Hx_Zmin.to_csv('Hx_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Hx_Zmax.to_csv('Hx_Zmax.dat', sep='\t', index=False, header=False)
+DAT_Hy_Zmin.to_csv('Hy_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Hy_Zmax.to_csv('Hy_Zmax.dat', sep='\t', index=False, header=False)
+DAT_Hz_Zmin.to_csv('Hz_Zmin.dat', sep='\t', index=False, header=False)
+DAT_Hz_Zmax.to_csv('Hz_Zmax.dat', sep='\t', index=False, header=False)
+
+#    CSV_Data=CSV_data.rename(columns={"Ex_real":"Ex_real_"+str(n), "Ex_imag":"Ex_imag_"+str(n), "Ey_real":"Ey_real_"+str(n), "Ey_imag":"Ey_imag_"+str(n), "Ez_real":"Ez_real_"+str(n), "Ez_imag":"Ez_imag_"+str(n), "Hx_real":"Hx_real_"+str(n), "Hx_imag":"Hx_imag_"+str(n), "Hy_real":"Hy_real_"+str(n), "Hy_imag":"Hy_imag_"+str(n), "Hz_real":"Hz_real_"+str(n), "Hz_imag":"Hz_imag_"+str(n)})
+
+EmissionType_list=["Ex_Xmin", "Ex_Xmax", "Ey_Xmin", "Ey_Xmax", "Ez_Xmin", "Ez_Xmax", "Hx_Xmin", "Hx_Xmax", "Hy_Xmin", "Hy_Xmax", "Hz_Xmin", "Hz_Xmax", \
+                   "Ex_Ymin", "Ex_Ymax", "Ey_Ymin", "Ey_Ymax", "Ez_Ymin", "Ez_Ymax", "Hx_Ymin", "Hx_Ymax", "Hy_Ymin", "Hy_Ymax", "Hz_Ymin", "Hz_Ymax", \
+                   "Ex_Zmin", "Ex_Zmax", "Ey_Zmin", "Ey_Zmax", "Ez_Zmin", "Ez_Zmax", "Hx_Zmin", "Hx_Zmax", "Hy_Zmin", "Hy_Zmax", "Hz_Zmin", "Hz_Zmax"]
+for Field in EmissionType_list:
+    MakeXML.MakeXML_CST(Field, frequency)
